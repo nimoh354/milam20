@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MILESHI HORIZON | Sovereign Apex Final</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #d4af37; --bg: #050505; --bio: #00d4ff; --danger: #ff4444; --success: #2ecc71; --card: rgba(18, 18, 18, 0.98); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: #fff; font-size: 11px; overflow-x: hidden; }
+         /* --- THE GATE (LOGIN SECTION) BACKGROUND --- */
+        
+        /* NAV */
+        nav { height: 70px; background: #000; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-between; padding: 0 5%; position: fixed; width: 100%; top: 0; z-index: 5000; }
+        .nav-links span { margin-left: 15px; cursor: pointer; color: #777; text-transform: uppercase; font-size: 8px; letter-spacing: 1px; }
+        .nav-links span:hover { color: var(--gold); }
+        
+        /* UI COMPONENTS */
+        .page { display: none; padding: 100px 5% 50px; min-height: 100vh; }
+        .active { display: block !important; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; justify-content: center; }
+        .card { background: var(--card); border: 1px solid #222; overflow: hidden; position: relative; border-radius: 4px; transition: 0.3s; }
+        .card img { width: 100%; height: 180px; object-fit: cover; display: block; }
+
+        .status-badge { position: absolute; top: 10px; right: 10px; padding: 4px 8px; font-size: 7px; font-weight: bold; border-radius: 2px; text-transform: uppercase; z-index: 10; }
+        .avail { background: var(--success); color: #000; }
+        .occu { background: var(--danger); color: #fff; }
+        .maint { background: #555; color: #fff; }
+
+        input, textarea { width: 100%; padding: 10px; background: #000; border: 1px solid #222; color: #fff; font-size: 10px; margin-top: 5px; outline: none; }
+        .btn { width: 100%; padding: 10px; border: 1px solid var(--gold); background: transparent; color: var(--gold); cursor: pointer; font-size: 9px; font-weight: bold; text-transform: uppercase; margin-top: 8px; transition: 0.2s; }
+        .btn:hover { background: var(--gold); color: #000; }
+
+        /* GATE & BIO */
+        #gate { position: fixed; inset: 0; z-index: 9000;  background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.9)), url('https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat;; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .role-card { background: #111; border: 1px solid #222; padding: 20px; width: 110px; text-align: center; cursor: pointer; transition: 0.3s; border-radius: 4px; }
+        #bio-scanner { display: none; width: 300px; text-align: center; }
+        .scan-bar { width: 100%; height: 2px; background: var(--bio); box-shadow: 0 0 15px var(--bio); position: relative; animation: scan 2s infinite ease-in-out; }
+        @keyframes scan { 0%, 100% { top: 0; } 50% { top: 100px; } }
+        .toggle-eye { position: absolute; right: 10px; top: 18px; cursor: pointer; color: #444; }
+
+        /* MODALS */
+        #payment-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 20000; display: none; align-items: center; justify-content: center; }
+        #receipt-area { background: #fff; color: #000; padding: 40px; width: 500px; display: none; font-family: 'Courier New', Courier, monospace; }
+        #cookie-popup { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #111; border: 1px solid var(--gold); padding: 15px; z-index: 30000; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+
+<div class="master-bg"></div>
+
+<div id="cookie-popup">
+    <p style="font-size:9px; color:#ccc;">SYSTEM CLEARANCE: This portal uses cookies for session stability. <span style="color:var(--gold)">Grant Authorization?</span></p>
+    <button class="btn" style="width:100px; margin:0;" onclick="this.parentElement.remove()">GRANT</button>
+</div>
+
+<div id="gate">
+    <h1 style="color:var(--gold); letter-spacing:12px; margin-bottom:40px;">MILESHI HORIZON SOVEREIGN SANCTUARY & PRIVATE ESTATE</h1>
+    <div id="auth-roles" style="display:flex; gap:15px;">
+        <div class="role-card" onclick="setRole('create')"><i class="fas fa-user-plus"></i><p>ENROLL</p></div>
+        <div class="role-card" onclick="setRole('guest')"><i class="fas fa-key"></i><p>GUEST</p></div>
+        <div class="role-card" onclick="setRole('staff')"><i class="fas fa-id-badge"></i><p>STAFF</p></div>
+        <div class="role-card" onclick="setRole('admin')"><i class="fas fa-shield-alt"></i><p>ADMIN</p></div>
+    </div>
+    
+    <div id="login-form" style="display:none; width:300px; margin-top:30px; text-align:center;">
+        <h3 id="role-tag" style="color:var(--bio); font-size:9px; margin-bottom:15px;"></h3>
+        <input type="text" id="uid" placeholder="IDENTIFICATION NAME">
+        <div style="position:relative">
+            <input type="password" id="upin" placeholder="SECURITY PIN">
+            <i class="fas fa-eye toggle-eye" onclick="togglePass()"></i>
+        </div>
+        <button class="btn" onclick="startBio()">INITIALIZE SCAN</button>
+    </div>
+
+    <div id="bio-scanner">
+        <div style="height:100px; border:1px solid #222; margin-bottom:20px; position:relative;">
+            <div class="scan-bar"></div>
+            <i class="fas fa-fingerprint" style="font-size:40px; color:var(--bio); margin-top:30px;"></i>
+        </div>
+        <p style="font-size:8px; color:var(--bio); letter-spacing:2px;">VERIFYING BIOMETRIC CLEARANCE...</p>
+    </div>
+</div>
+
+<div id="app" style="display:none;">
+    <nav>
+        <div style="color:var(--gold); font-weight:bold; letter-spacing:3px;">MILESHI HORIZON</div>
+        <div class="nav-links">
+            <span onclick="go('legacy')">Legacy</span>
+            <span onclick="go('suites')">Suites</span>
+            <span onclick="go('dining')">Dining</span>
+            <span onclick="go('events')">Events</span>
+            <span onclick="go('amenities')">Amenities</span>
+            <span onclick="go('contact')">Contact</span>
+            <span onclick="go('folio')">Folio <b id="cart-count">(0)</b></span>
+            <span id="nav-queue" style="display:none; color:var(--bio);" onclick="go('queue')">Queue</span>
+            <span id="nav-admin" style="display:none; color:var(--success);" onclick="go('admin')">Admin</span>
+            <span onclick="location.reload()" style="color:var(--danger)">Logout</span>
+        </div>
+    </nav>
+
+    <section id="legacy" class="page active">
+        <center style="max-width:600px; margin:0 auto; padding-top:50px;">
+            <h1 style="color:var(--gold); letter-spacing:10px;">SOVEREIGN LEGACY</h1>
+            <p style="margin-top:25px; line-height:2; color:#888;">Diplomatic excellence and architectural brilliance in the heart of the horizon.Mileshi Horizon is an enclave of architecture and absolute security. The herat of kenya, the estate represents a new frontier in sovereign living</p>
+        </center>
+    </section>
+
+    <section id="suites" class="page"><h2>ELITE SUITES</h2><div class="grid" id="suites-grid"></div></section>
+    <section id="dining" class="page"><h2>FINE DINING</h2><div class="grid" id="dining-grid"></div></section>
+    <section id="events" class="page"><h2>GRAND EVENTS</h2><div class="grid" id="events-grid"></div></section>
+    <section id="amenities" class="page"><h2>PREMIUM AMENITIES</h2><div class="grid" id="amenities-grid"></div></section>
+
+    <section id="contact" class="page">
+        <center style="max-width:400px; margin:0 auto; padding-top:50px;">
+            <h2 style="color:var(--gold)">CONNECT</h2>
+            <input type="text" placeholder="YOUR NAME">
+            <textarea style="height:100px;" placeholder="YOUR DISPATCH"></textarea>
+            <button class="btn">SEND MESSAGE</button>
+            <p style="margin-top:30px; color:#444;">📍 42 Horizon Blvd | ✉ horizon@mileshi.com</p>
+        </center>
+    </section>
+
+    <section id="queue" class="page"><h2 style="color:var(--bio)">SERVICE QUEUE</h2><div id="queue-list" style="margin-top:20px;"></div></section>
+    <section id="admin" class="page"><h2 style="color:var(--success)">SYSTEM AUDIT</h2><div id="log-box" style="background:#000; color:#0f0; padding:15px; height:350px; overflow-y:auto; font-family:monospace; margin-top:20px; border:1px solid #222; font-size:9px;"></div></section>
+
+    <section id="folio" class="page">
+        <h2>YOUR FOLIO</h2>
+        <div id="folio-list" style="margin-top:20px; border-top:1px solid #222;"></div>
+        <div style="text-align:right; margin-top:30px;">
+            <h3 id="folio-total">TOTAL: KSH 0</h3>
+            <button class="btn" style="width:200px; border-color:var(--success); color:var(--success)" onclick="openPay()">CHECKOUT</button>
+        </div>
+    </section>
+</div>
+
+<div id="payment-modal">
+    <div style="background:#111; padding:30px; border:1px solid var(--gold); width:340px; text-align:center;">
+        <h3 style="color:var(--gold); margin-bottom:20px;">GATEWAY SELECTION</h3>
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <button class="btn" onclick="setPayMethod('MPESA')">M-PESA</button>
+            <button class="btn" onclick="setPayMethod('VISA')">VISA</button>
+        </div>
+        <div id="pay-fields" style="display:none;">
+            <input type="text" id="pay-phone" placeholder="CREDENTIALS">
+            <input type="password" id="pay-pin-field" placeholder="SECURE PIN">
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn" style="border-color:var(--success); color:var(--success)" onclick="processPayment()">AUTHORIZE</button>
+                <button class="btn" style="border-color:var(--danger); color:var(--danger)" onclick="$('payment-modal').style.display='none'">CANCEL</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="receipt-area">
+    <center>
+        <h2>MILESHI HORIZON</h2>
+        <p>Sovereign Group | Official Invoice</p>
+        <hr style="margin:10px 0;">
+    </center>
+    <div id="receipt-list" style="margin:20px 0;"></div>
+    <div style="text-align:right; border-top:1px solid #eee; padding-top:10px;">
+        <p id="r-sub"></p>
+        <p id="r-tax"></p>
+        <h3 id="r-total" style="font-size:16px;"></h3>
+    </div>
+    <center style="margin-top:30px;">
+        <div id="qrcode" style="display:inline-block; padding:10px; background:#fff;"></div>
+        <p style="font-size:9px; margin-top:10px;">ID: <span id="r-id"></span></p>
+    </center>
+</div>
+
+<script>
+    const $ = (id) => document.getElementById(id);
+    let inventory = [], cart = [], serviceQueue = [], currentRole = '', activeUser = '', payMethod = '';
+
+    function togglePass() { const p = $('upin'); p.type = p.type === 'password' ? 'text' : 'password'; }
+    function setRole(r) { currentRole = r; $('auth-roles').style.display='none'; $('login-form').style.display='block'; $('role-tag').innerText = r.toUpperCase() + " PORTAL"; }
+    function startBio() { $('login-form').style.display='none'; $('bio-scanner').style.display='block'; setTimeout(executeLogin, 2000); }
+
+    function executeLogin() {
+        const u = $('uid').value, p = $('upin').value;
+        if(currentRole === 'admin' && p !== 'SUPER-LOGS') { alert("Denied"); location.reload(); return; }
+        if(currentRole === 'staff' && p !== 'APEX-99') { alert("Denied"); location.reload(); return; }
+        if(currentRole === 'create') localStorage.setItem('u_'+u, p);
+        if(currentRole === 'guest' && localStorage.getItem('u_'+u) !== p) { alert("Invalid"); location.reload(); return; }
+        activeUser = u.toUpperCase();
+        $('gate').style.display='none'; $('app').style.display='block';
+        if(currentRole==='admin' || currentRole==='staff') $('nav-queue').style.display='inline';
+        if(currentRole==='admin') $('nav-admin').style.display='inline';
+        generateData(); render();
+    }
+
+    function generateData() {
+        inventory = [];
+        const suites = [{n:'Presidential Suite', id:'1578683010236-d716f9a3f461', p:180000},{n:'Penthouse Suite', id:'1631049307264-da0ec9d70304', p:150000},{n:'Executive Suite', id:'1590490360182-c33d57733427', p:95000},{n:'Luxury Suite', id:'1566665797739-1674de7a421a', p:75000}];
+        suites.forEach(s => { for(let i=1; i<=3; i++) inventory.push({ id:`S-${s.n}-${i}`, cat:'suite', name:`${s.n} ${i}`, price:s.p, status:'available', img:`https://images.unsplash.com/photo-${s.id}?w=600` }); });
+
+        const menu = [{n:'Sovereign Pizza', p:2500, id:'1513104890138-7c749659a591'},{n:'Horizon Burger', p:1800, id:'1568901346375-23c9450c58cd'},{n:'Pan-Seared Snapper', p:1500, id:'1467003909585-2f8a72700288'}, {n:'Nyama Choma Plat', p:2200, id:'1555939594-58d7cb561ad1'},{n:'Prime Ribeye', p:3500, id:'1558030006-450675393462'},{n:'Lobster Tail', p:4500, id:'1551248429-40975aa4de74'},{n:'Sushi Platter', p:5500, id:'1553621042-f6e147245754'},{n:'Nyama Choma Skewers', p:2100, id:'1533682805518-48d1f5b8cd3a'},{n:'Truffle Pasta', p:3100, id:'1473093226795-af9932fe5856'},{n:'Seafood Paella', p:4200, id:'1559742811-822873691df8'},{n:'Garden Salad', p:1200, id:'1512621776951-a57141f2eefd'},{n:'Horizon Wings', p:1600, id:'1527477396000-e27163b481c2'},{n:'Nyama Choma Special', p:2800, id:'1512838243191-e81e8f66f1fd'},{n:'King Prawn Curry', p:2900, id:'1559847844-5315695dadae'},{n:'Artisan Drinks', p:1200, id:'1551024709-8f23befc6f87'},{n:'Fruit Parfait', p:1100, id:'1488477181946-6428a0291777'},{n:'Chocolate Cake', p:1500, id:'1578985545062-69928b1d9587'},{n:'Red Wine Reserv', p:8000, id:'1510812431401-41d2bd2722f3'},{n:'Breakfast Plate', p:2200, id:'1525351484163-7529414344d8'},{n:'Omelette Deluxe', p:1300, id:'1510629954389-c1e0da47d414'}];
+        menu.forEach((f, i) => inventory.push({ id:`D-${i}`, cat:'dining', name:f.n, price:f.p, status:'available', img:`https://images.unsplash.com/photo-${f.id}?w=600` }));
+
+        const gItems = [{n:'Zen Wellness Spa', id:'1544161515-4ab6ce6db874', p:12000},{n:'Infinite Swimming Pool', id:'1576013551627-0cc20b96c2a7', p:5000},{n:'High-Performance Gym', id:'1534438327276-14e5300c3a48', p:3500},{n:'Skyline Lounge', id:'1560624052-449f5ddf0c31', p:7000},{n:'Grand Reception', id:'1564501049412-61c2a3083791', p:0},{n:'Private Cinema', id:'1489599849927-2ee91cede3ba', p:15000},{n:'Tropical Gardens', id:'1585320806297-9794b3e4eeae', p:2500},{n:'Wine Cellar', id:'1510812431401-41d2bd2722f3', p:9500},{n:'Executive Boardroom', id:'1431540015161-0bf868a2d407', p:25000},{n:'Helipad Access', id:'1502462041640-b3d7e50d0662', p:50000}];
+        gItems.forEach((g, i) => inventory.push({ id:`G-${i}`, cat:'amenities', name:g.n, price:g.p, status:'available', img:`https://images.unsplash.com/photo-${g.id}?w=600` }));
+
+        for(let i=1; i<=10; i++) inventory.push({ id:`E-${i}`, cat:'event', name:`Crystal Ballroom #${i}`, price:85000+(i*5000), status:'available', img:`https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600` });
+    }
+
+    function render() {
+        ['suite', 'dining', 'event', 'amenities'].forEach(cat => {
+            const container = cat === 'dining' ? $('dining-grid') : $(cat + (cat === 'amenities' ? '' : 's') + '-grid');
+            if(!container) return;
+            container.innerHTML = inventory.filter(x => x.cat === cat).map(i => `
+                <div class="card">
+                    <span class="status-badge ${i.status==='available'?'avail':(i.status==='occupied'?'occu':'maint')}">${i.status}</span>
+                    <img src="${i.img}">
+                    <div style="padding:15px;">
+                        <h6 style="font-size:10px;">${i.name}</h6>
+                        <p style="color:var(--gold); margin-bottom:10px;">KSH ${i.price.toLocaleString()}</p>
+                        ${(i.cat==='suite'||i.cat==='event') && i.status==='available' ? `<input type="date" id="in-${i.id}"><input type="date" id="out-${i.id}">` : ''}
+                        ${(currentRole==='admin'||currentRole==='staff') ? `<button class="btn" style="border-color:#555; color:#888;" onclick="toggleMaint('${i.id}')">Maintenance</button>` : ''}
+                        ${i.status==='available' ? `<button class="btn" onclick="book('${i.id}')">Acquire</button>` : ''}
+                    </div>
+                </div>`).join('');
+        });
+        renderQueue();
+    }
+
+    function toggleMaint(id) { const itm = inventory.find(x => x.id === id); itm.status = itm.status === 'maintenance' ? 'available' : 'maintenance'; render(); }
+    function book(id) {
+        const itm = inventory.find(x => x.id === id);
+        let dates = "";
+        if(itm.cat==='suite' || itm.cat==='event') {
+            const cin = $(`in-${id}`).value, cout = $(`out-${id}`).value;
+            if(!cin || !cout) return alert("Select Dates");
+            dates = `(${cin} to ${cout})`;
+        }
+        itm.status = 'occupied';
+        cart.push({...itm, dates});
+        serviceQueue.push({ guest: activeUser, item: itm.name, dates: dates, id: Date.now() });
+        updateFolio(); render();
+    }
+
+    function updateFolio() {
+        $('cart-count').innerText = `(${cart.length})`;
+        const sub = cart.reduce((a,b) => a+b.price, 0);
+        $('folio-total').innerText = `TOTAL: KSH ${sub.toLocaleString()}`;
+        $('folio-list').innerHTML = cart.map(i => `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #222;"><span>${i.name} ${i.dates}</span><span>KSH ${i.price.toLocaleString()}</span></div>`).join('');
+    }
+
+    function openPay() { if(cart.length) $('payment-modal').style.display='flex'; }
+    function setPayMethod(m) { payMethod = m; $('pay-fields').style.display = 'block'; $('pay-phone').placeholder = m==='MPESA' ? "254..." : "CARD NUMBER"; }
+
+    function processPayment() {
+        if(!$('pay-pin-field').value) return alert("Security PIN required");
+        const sub = cart.reduce((a,b) => a+b.price, 0);
+        const tax = sub * 0.16;
+        const total = sub + tax;
+        const ref = `MH-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+        $('receipt-list').innerHTML = cart.map(i => `<p style="display:flex; justify-content:space-between;"><span>${i.name}</span><span>KSH ${i.price.toLocaleString()}</span></p>`).join('');
+        $('r-sub').innerText = `SUBTOTAL: KSH ${sub.toLocaleString()}`;
+        $('r-tax').innerText = `VAT (16%): KSH ${tax.toLocaleString()}`;
+        $('r-total').innerText = `GRAND TOTAL: KSH ${total.toLocaleString()}`;
+        $('r-id').innerText = ref;
+
+ $('qrcode').innerHTML = "";
+        new QRCode($("qrcode"), { text: ref, width: 80, height: 80 });
+
+        $('receipt-area').style.display = 'block';
+        html2pdf().from($('receipt-area')).save(`${ref}.pdf`).then(() => location.reload());
+    }
+
+    function go(p) { document.querySelectorAll('.page').forEach(x => x.classList.remove('active')); $(p).classList.add('active'); }
+    function renderQueue() {
+        if(!$('queue-list')) return;
+        $('queue-list').innerHTML = serviceQueue.map(q => `<div style="background:#111; padding:15px; border-left:3px solid var(--bio); margin-bottom:10px; display:flex; justify-content:space-between;"><span><b>${q.guest}</b>: ${q.item}</span><button class="btn" style="width:100px; margin:0;" onclick="clearQueue(${q.id})">RESOLVE</button></div>`).join('');
+    }
+    function clearQueue(id) { serviceQueue = serviceQueue.filter(x => x.id !== id); renderQueue(); }
+    function go(p) { document.querySelectorAll('.page').forEach(x => x.classList.remove('active')); $(p).classList.add('active'); }
+</script>
+</body>
+</html>
